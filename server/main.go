@@ -34,6 +34,7 @@ func portHandler(port int) http.HandlerFunc {
 func main() {
 	beginPort := structs.GetPorts().Min
 	endPort := structs.GetPorts().Max
+	fmt.Println("Total number of ports(servers): ", endPort-beginPort+1)
 
 	if beginPort > endPort {
 		log.Fatalf("Begin port should be less than or equal to end port")

@@ -2,9 +2,11 @@ package structs
 
 import "math/rand"
 
-const ResponseRowsPerServer = 500 //Simulating returned number of tokens by DEX
+const ResponseRowsPerServer = 2000 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
-const RequestTimeOut = 5
+const RequestTimeOut = 5000 // Timeout in milliseconds
+const MinPort = 10001
+const MaxPort = 12000
 
 type Ports struct {
 	Min    int   `json:"min"`
@@ -21,8 +23,8 @@ type Response struct {
 
 func GetPorts() Ports {
 	return Ports{
-		Min:    10001,                      //Simulating server 1
-		Max:    10015,                      //Simulating server 15
+		Min:    MinPort,                    //Simulating server 1
+		Max:    MaxPort,                    //Simulating server 15
 		Failed: []int{10002, 10003, 10010}, //Simulating failed ports
 	}
 }
