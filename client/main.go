@@ -89,7 +89,8 @@ func main() {
 						lowPrice = responseRows[j].Price
 						highPrice = responseRows[i].Price
 					}
-					fmt.Printf("Lowest Price: %s (DEX: %s) ---> Highest Price: %s (DEX: %s)\n", lowPrice, fromAddress, highPrice, toAddress)
+					//Need to print the address of the DEXes, from Response.Dex <---------
+					fmt.Printf("Lowest Price: %s (Address: %s) ---> Highest Price: %s (Address: %s)\n", lowPrice, fromAddress, highPrice, toAddress)
 					fmt.Printf("Price1: %.2f, Price2: %.2f, Difference: %.2f%%\n", price1, price2, diffPct*100)
 				}
 			}
