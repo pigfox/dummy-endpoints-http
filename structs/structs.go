@@ -6,7 +6,7 @@ const ResponseRowsPerServer = 2000 // Simulating returned number of tokens by DE
 const PriceDifferencePct = 5
 const RequestTimeOut = 5000 // Timeout in milliseconds
 const MinPort = 10001
-const MaxPort = 12000
+const MaxPort = 10003 //12000
 
 type Ports struct {
 	Min    int   `json:"min"`
@@ -23,9 +23,9 @@ type Response struct {
 
 func GetPorts() Ports {
 	return Ports{
-		Min:    MinPort,                    //Simulating server 1
-		Max:    MaxPort,                    //Simulating server 15
-		Failed: []int{10002, 10003, 10010}, //Simulating failed ports
+		Min:    MinPort,
+		Max:    MaxPort,
+		Failed: []int{}, //Simulating failed ports 10002, 10003, 10010
 	}
 }
 
