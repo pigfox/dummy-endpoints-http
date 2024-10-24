@@ -18,7 +18,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	allResponses := []structs.Response{}
+	var allResponses []structs.Response // Slice to hold structs.Response objects
 
 	// Iterate through each port and send requests concurrently
 	for port := beginPort; port <= endPort; port++ {
@@ -28,7 +28,7 @@ func main() {
 			defer wg.Done()
 
 			url := fmt.Sprintf("http://localhost:%d", port)
-			responses, err := requester.MakeWG(url)
+			response, err := requester.MakeWG(url) // Create an empty structs.Response object and unmarshal
 			if err != nil {
 				log.Printf("Error for port %d: %v", port, err)
 				return
@@ -36,58 +36,60 @@ func main() {
 
 			// Lock before modifying the shared slice
 			mu.Lock()
-			allResponses = append(allResponses, responses...)
+			allResponses = append(allResponses, *response)
 			mu.Unlock()
-
 		}(port)
 	}
 
 	// Wait for all Go routines to complete
 	wg.Wait()
 
-	// Sort the responses by the Address field
-	sort.Slice(allResponses, func(i, j int) bool {
-		return allResponses[i].Address < allResponses[j].Address
-	})
-
-	// Group responses by Address for price comparison
-	groupedByAddress := make(map[string][]structs.Response)
+	// Group responses by address for price comparison
+	groupedByAddress := make(map[string][]structs.ResponseRow)
 
 	for _, response := range allResponses {
-		groupedByAddress[response.Address] = append(groupedByAddress[response.Address], response)
+		for _, resp := range response.Responses { // Access nested responses
+			groupedByAddress[resp.Address] = append(groupedByAddress[resp.Address], resp)
+		}
 	}
 
-	// Compare prices by address and check if the difference exceeds the threshold
+	// Compare prices by address and check for threshold
 	priceDifferenceThreshold := structs.PriceDifferencePct / 100.0
 
-	for address, responses := range groupedByAddress {
-		if len(responses) < 2 {
-			// Not enough responses to compare
-			continue
+	for address, responseRows := range groupedByAddress {
+		if len(responseRows) < 2 {
+			continue // Not enough responses
 		}
 
-		// Sort responses by price within the group
-		sort.Slice(responses, func(i, j int) bool {
-			return responses[i].Price < responses[j].Price
+		// Sort response rows by price within the group
+		sort.Slice(responseRows, func(i, j int) bool {
+			return responseRows[i].Price < responseRows[j].Price
 		})
 
-		// Compare each consecutive pair of prices
-		for i := 1; i < len(responses); i++ {
-			price1 := float64(responses[i-1].Price)
-			price2 := float64(responses[i].Price)
-			diffPct := math.Abs(price2-price1) / price1
+		// Compare prices across all DEXes for this address
+		for i := 0; i < len(responseRows); i++ {
+			for j := i + 1; j < len(responseRows); j++ {
+				price1 := float64(responseRows[i].Price)
+				price2 := float64(responseRows[j].Price)
+				diffPct := math.Abs(price2-price1) / price1
 
-			if diffPct > priceDifferenceThreshold {
-				port1 := responses[i-1].Message
-				port2 := responses[i].Message
-				//add output indication from which ports the prices are coming from
-				fmt.Printf("Significant price difference found at Address: %s\n", address)
-				fmt.Printf("Port1: %s, Price1: %d, Port2: %s, Price2: %d, Difference: %.2f%%\n",
-					port1, int(price1), port2, int(price2), diffPct*100)
+				if diffPct > priceDifferenceThreshold {
+					// Log the price difference with DEX names
+					fmt.Printf("Price difference found for Address: %s\n", address)
+					lowDex := responseRows[i].Message
+					highDex := responseRows[j].Message
+					if responseRows[i].Price < responseRows[j].Price {
+						lowDex, highDex = highDex, lowDex
+					}
+					fmt.Printf("Lowest Price: %s (DEX: %s) ---> Highest Price: %s (DEX: %s)\n", lowDex, lowDex[:9], highDex, highDex[:9])
+					fmt.Printf("Price1: %.2f, Price2: %.2f, Difference: %.2f%%\n", price1, price2, diffPct*100)
+				}
 			}
 		}
 	}
+
 	fmt.Println("Total time taken: ", time.Since(beginTime))
 	fmt.Println("Total number of responses: ", len(allResponses))
 	fmt.Println("Total number of ports(servers): ", endPort-beginPort+1)
+	time.Sleep(2 * time.Second)
 }

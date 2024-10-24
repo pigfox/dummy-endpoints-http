@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func MakeWG(url string) ([]structs.Response, error) {
+func MakeWG(url string) (*structs.Response, error) {
 	var req *http.Request
 	var err error
 	req, err = http.NewRequest("GET", url, http.NoBody)
@@ -42,10 +42,10 @@ func MakeWG(url string) ([]structs.Response, error) {
 	}
 
 	// Parse the JSON response
-	var responses []structs.Response
+	var responses structs.Response
 	if err := json.Unmarshal(resBody, &responses); err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
 	}
 
-	return responses, nil
+	return &responses, nil
 }

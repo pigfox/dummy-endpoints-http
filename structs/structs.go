@@ -2,7 +2,7 @@ package structs
 
 import "math/rand"
 
-const ResponseRowsPerServer = 2000 // Simulating returned number of tokens by DEX
+const ResponseRowsPerServer = 3 //2000 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
 const RequestTimeOut = 5000 // Timeout in milliseconds
 const MinPort = 10001
@@ -22,7 +22,8 @@ type Response struct {
 type ResponseRow struct {
 	Message   string `json:"message"`
 	Timestamp string `json:"timestamp"`
-	Price     int    `json:"random_int"`
+	Price     int    `json:"price"`
+	Supply    int    `json:"supply"`
 	Address   string `json:"address"`
 }
 
