@@ -2,11 +2,14 @@ package structs
 
 import "math/rand"
 
-const ResponseRowsPerServer = 3 //2000 // Simulating returned number of tokens by DEX
+const ResponseRowsPerServer = 3 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
 const RequestTimeOut = 5000 // Timeout in milliseconds
 const MinPort = 10001
-const MaxPort = 10003 //12000
+const MaxPort = 10005
+
+type Swap struct {
+}
 
 type Ports struct {
 	Min    int   `json:"min"`
