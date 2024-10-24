@@ -13,18 +13,23 @@ import (
 func portHandler(port int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		var out []structs.Response
+		var row []structs.ResponseRow
 		for i := 0; i < structs.ResponseRowsPerServer; i++ {
-			res := structs.Response{
+			res := structs.ResponseRow{
 				Message:   fmt.Sprintf("This is port: %d", port),
-				TimeStamp: time.Now().Format(time.RFC3339),
+				Timestamp: time.Now().Format(time.RFC3339),
 				Price:     structs.RandomInt(1, 100),
+				Supply:    structs.RandomInt(1000, 100000000),
 				Address:   "0x" + fmt.Sprintf("%d", i),
 			}
-			out = append(out, res)
+			row = append(row, res)
+		}
+		response := structs.Response{
+			Dex:       fmt.Sprintf("DEX %d", port),
+			Responses: row,
 		}
 
-		if err := json.NewEncoder(w).Encode(out); err != nil {
+		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
