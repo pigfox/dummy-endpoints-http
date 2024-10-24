@@ -18,7 +18,9 @@ func portHandler(port int) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		var row []structs.ResponseRow
-		for i := 0; i < structs.ResponseRowsPerServer; i++ {
+
+		responseRows := structs.RandomInt(structs.ResponseRowsPerServerMin, structs.ResponseRowsPerServerMax)
+		for i := 0; i < responseRows; i++ {
 			res := structs.ResponseRow{
 				Timestamp: time.Now().Format(time.RFC3339),
 				Price:     structs.RandomInt(1, 100),
