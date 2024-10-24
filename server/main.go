@@ -12,6 +12,10 @@ import (
 // handler function that returns the current port
 func portHandler(port int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Simulate random delay in response
+		delay := structs.RandomInt(0, structs.ResponseDelayMax)
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+
 		w.Header().Set("Content-Type", "application/json")
 		var row []structs.ResponseRow
 		for i := 0; i < structs.ResponseRowsPerServer; i++ {

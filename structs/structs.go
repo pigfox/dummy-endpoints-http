@@ -2,11 +2,12 @@ package structs
 
 import "math/rand"
 
-const ResponseRowsPerServer = 3 // Simulating returned number of tokens by DEX
+const ResponseRowsPerServer = 2000 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
-const RequestTimeOut = 5000 // Timeout in milliseconds
+const RequestTimeOut = 5000    // Timeout in milliseconds
+const ResponseDelayMax = 10000 //
 const MinPort = 10001
-const MaxPort = 10005
+const MaxPort = 10055
 
 var FailedPorts = []int{10002, 10003, 10006}
 
