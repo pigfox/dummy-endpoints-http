@@ -15,8 +15,13 @@ type Ports struct {
 }
 
 type Response struct {
+	Dex       string `json:"dex"`
+	Responses []ResponseRow
+}
+
+type ResponseRow struct {
 	Message   string `json:"message"`
-	TimeStamp string `json:"timestamp"`
+	Timestamp string `json:"timestamp"`
 	Price     int    `json:"random_int"`
 	Address   string `json:"address"`
 }
