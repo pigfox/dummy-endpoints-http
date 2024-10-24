@@ -8,6 +8,8 @@ const RequestTimeOut = 5000 // Timeout in milliseconds
 const MinPort = 10001
 const MaxPort = 10005
 
+var FailedPorts = []int{10002, 10003, 10006}
+
 type Swap struct {
 }
 
@@ -33,7 +35,7 @@ func GetPorts() Ports {
 	return Ports{
 		Min:    MinPort,
 		Max:    MaxPort,
-		Failed: []int{}, //Simulating failed ports 10002, 10003, 10010
+		Failed: FailedPorts, // []int{10002, 10003, 10010},
 	}
 }
 
