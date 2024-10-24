@@ -16,7 +16,6 @@ func portHandler(port int) http.HandlerFunc {
 		var row []structs.ResponseRow
 		for i := 0; i < structs.ResponseRowsPerServer; i++ {
 			res := structs.ResponseRow{
-				Message:   fmt.Sprintf("This is port: %d", port),
 				Timestamp: time.Now().Format(time.RFC3339),
 				Price:     structs.RandomInt(1, 100),
 				Supply:    structs.RandomInt(1000, 100000000),

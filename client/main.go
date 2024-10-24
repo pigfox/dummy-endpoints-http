@@ -76,12 +76,20 @@ func main() {
 				if diffPct > priceDifferenceThreshold {
 					// Log the price difference with DEX names
 					fmt.Printf("Price difference found for Address: %s\n", address)
-					lowDex := responseRows[i].Message
-					highDex := responseRows[j].Message
+					var fromAddress, toAddress string
+					var lowPrice, highPrice int
 					if responseRows[i].Price < responseRows[j].Price {
-						lowDex, highDex = highDex, lowDex
+						fromAddress = responseRows[i].Address
+						toAddress = responseRows[j].Address
+						lowPrice = responseRows[i].Price
+						highPrice = responseRows[j].Price
+					} else {
+						fromAddress = responseRows[j].Address
+						toAddress = responseRows[i].Address
+						lowPrice = responseRows[j].Price
+						highPrice = responseRows[i].Price
 					}
-					fmt.Printf("Lowest Price: %s (DEX: %s) ---> Highest Price: %s (DEX: %s)\n", lowDex, lowDex[:9], highDex, highDex[:9])
+					fmt.Printf("Lowest Price: %s (DEX: %s) ---> Highest Price: %s (DEX: %s)\n", lowPrice, fromAddress, highPrice, toAddress)
 					fmt.Printf("Price1: %.2f, Price2: %.2f, Difference: %.2f%%\n", price1, price2, diffPct*100)
 				}
 			}
@@ -91,5 +99,4 @@ func main() {
 	fmt.Println("Total time taken: ", time.Since(beginTime))
 	fmt.Println("Total number of responses: ", len(allResponses))
 	fmt.Println("Total number of ports(servers): ", endPort-beginPort+1)
-	time.Sleep(2 * time.Second)
 }

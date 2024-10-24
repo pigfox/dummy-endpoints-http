@@ -20,7 +20,6 @@ type Response struct {
 }
 
 type ResponseRow struct {
-	Message   string `json:"message"`
 	Timestamp string `json:"timestamp"`
 	Price     int    `json:"price"`
 	Supply    int    `json:"supply"`
