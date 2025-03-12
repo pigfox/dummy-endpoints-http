@@ -16,10 +16,9 @@ func portHandler(port int) http.HandlerFunc {
 		delay := structs.RandomInt(0, structs.ResponseDelayMax)
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 
-		w.Header().Set("Content-Type", "application/json")
 		var row []structs.ResponseRow
-
 		responseRows := structs.RandomInt(structs.ResponseRowsPerServerMin, structs.ResponseRowsPerServerMax)
+
 		for i := 0; i < responseRows; i++ {
 			res := structs.ResponseRow{
 				Timestamp: time.Now().Format(time.RFC3339),
@@ -29,15 +28,22 @@ func portHandler(port int) http.HandlerFunc {
 			}
 			row = append(row, res)
 		}
+
 		response := structs.Response{
 			Dex:       fmt.Sprintf("DEX %d", port),
 			Responses: row,
 		}
 
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		// Encode the response before setting headers
+		responseData, err := json.Marshal(response)
+		if err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
+
+		// Set headers and write response
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(responseData)
 	}
 }
 
