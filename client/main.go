@@ -17,8 +17,10 @@ func main() {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allResponses []structs.Response // Slice to hold structs.Response objects
+
 	for {
 		beginTime := time.Now()
+
 		// Iterate through each port and send requests concurrently
 		for port := beginPort; port <= endPort; port++ {
 			wg.Add(1)
@@ -27,7 +29,7 @@ func main() {
 				defer wg.Done()
 
 				url := fmt.Sprintf("http://localhost:%d", port)
-				response, err := requester.MakeWG(url) // Assuming MakeWG returns a *structs.Response
+				response, err := requester.Make(url) // Assuming Make returns a *structs.Response
 				if err != nil {
 					log.Printf("Error for port %d: %v", port, err)
 					return
@@ -40,53 +42,61 @@ func main() {
 			}(port)
 		}
 
-		// Wait for all Go routines to complete
+		// Wait for all goroutines to complete
 		wg.Wait()
 
-		// Group responses by address for price comparison
-		groupedByAddress := make(map[string][]structs.Response)
+		// Map to group tokens by address
+		groupedByAddress := make(map[string]map[string]float64) // map[address]map[DEX]Price
 
 		for _, response := range allResponses {
-			for _, resp := range response.Tokens { // Access nested responses
-				groupedByAddress[resp.Address] = append(groupedByAddress[resp.Address], response)
+			for _, token := range response.Tokens {
+				if _, exists := groupedByAddress[token.Address]; !exists {
+					groupedByAddress[token.Address] = make(map[string]float64)
+				}
+				groupedByAddress[token.Address][response.Dex] = token.Price
 			}
 		}
 
-		// Compare prices by address and check for threshold
+		// Compare prices by address
 		priceDifferenceThreshold := structs.PriceDifferencePct / 100.0
 
-		for address, responses := range groupedByAddress {
-			if len(responses) < 2 {
-				continue // Not enough responses to compare
+		for address, dexPrices := range groupedByAddress {
+			dexList := []string{}
+			prices := []float64{}
+
+			// Convert map to slice for comparison
+			for dex, price := range dexPrices {
+				dexList = append(dexList, dex)
+				prices = append(prices, price)
 			}
 
-			// Compare prices across all DEXes for this address
-			for i := 0; i < len(responses); i++ {
-				for j := i + 1; j < len(responses); j++ {
-					price1 := float64(responses[i].Tokens[0].Price)
-					price2 := float64(responses[j].Tokens[0].Price)
+			if len(prices) < 2 {
+				continue // Not enough DEXes to compare
+			}
+
+			// Compare prices across all DEXes for this token
+			for i := 0; i < len(prices); i++ {
+				for j := i + 1; j < len(prices); j++ {
+					price1, price2 := prices[i], prices[j]
 					diffPct := math.Abs(price2-price1) / price1
 
-					if diffPct > priceDifferenceThreshold && responses[i].Dex != responses[j].Dex {
-						if responses[i].Tokens[0].Address == responses[j].Tokens[0].Address {
-							// Log the price difference with DEX names
-							var fromDex, toDex string
-							if responses[i].Tokens[0].Price < responses[j].Tokens[0].Price {
-								fromDex = responses[i].Dex
-								toDex = responses[j].Dex
-							} else {
-								fromDex = responses[j].Dex
-								toDex = responses[i].Dex
-							}
-
-							swap(address, fromDex, toDex, price1, price2, diffPct)
+					if diffPct > priceDifferenceThreshold {
+						var fromDex, toDex string
+						if price1 < price2 {
+							fromDex = dexList[i]
+							toDex = dexList[j]
+						} else {
+							fromDex = dexList[j]
+							toDex = dexList[i]
 						}
+
+						swap(address, fromDex, toDex, price1, price2, diffPct)
 					}
 				}
 			}
 		}
 
-		fmt.Println("Total time taken: ", time.Since(beginTime))
+		fmt.Println("Total time taken: ", time.Since(beginTime), "@", time.Now().Format("2006-01-02 15:04:05"))
 		fmt.Println("Total number of responses: ", len(allResponses))
 		fmt.Println("Total number of ports (servers): ", endPort-beginPort+1)
 		fmt.Println("----- Sleeping for ", structs.RequestSleepInterval, " seconds -----")

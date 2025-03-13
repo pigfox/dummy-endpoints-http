@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func MakeWG(url string) (*structs.Response, error) {
+func Make(url string) (*structs.Response, error) {
 	var req *http.Request
 	var err error
 	req, err = http.NewRequest("GET", url, http.NoBody)
@@ -28,7 +28,12 @@ func MakeWG(url string) (*structs.Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
 
 	// Read the response body
 	resBody, err := io.ReadAll(res.Body)

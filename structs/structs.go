@@ -2,8 +2,8 @@ package structs
 
 import "math/rand"
 
-const ResponseRowsPerServerMax = 3
-const ResponseRowsPerServerMin = 1 // Simulating returned number of tokens by DEX
+const TokensPerServerMax = 4
+const TokensPerServerMin = 1 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
 const RequestTimeOut = 5000    // Timeout in milliseconds
 const ResponseDelayMax = 10000 //
@@ -29,10 +29,10 @@ type Response struct {
 }
 
 type Token struct {
-	Timestamp string `json:"timestamp"`
-	Price     int    `json:"price"`
-	Supply    int    `json:"supply"`
-	Address   string `json:"address"`
+	Timestamp string  `json:"timestamp"`
+	Price     float64 `json:"price"`
+	Supply    int     `json:"supply"`
+	Address   string  `json:"address"`
 }
 
 func GetPorts() Ports {
@@ -54,4 +54,8 @@ func Contains(arr []int, num int) bool {
 
 func RandomInt(min, max int) int {
 	return min + rand.Intn(max-min)
+}
+
+func RandomFloat(min, max float64) float64 {
+	return min + rand.Float64()*(max-min)
 }

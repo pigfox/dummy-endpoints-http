@@ -17,12 +17,12 @@ func portHandler(port int) http.HandlerFunc {
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 
 		var row []structs.Token
-		responseRows := structs.RandomInt(structs.ResponseRowsPerServerMin, structs.ResponseRowsPerServerMax)
+		responseRows := structs.RandomInt(structs.TokensPerServerMin, structs.TokensPerServerMax)
 
 		for i := 0; i < responseRows; i++ {
 			res := structs.Token{
 				Timestamp: time.Now().Format(time.RFC3339),
-				Price:     structs.RandomInt(1, 100),
+				Price:     structs.RandomFloat(1, 100),
 				Supply:    structs.RandomInt(1000, 100000000),
 				Address:   "0x" + fmt.Sprintf("%d", i),
 			}
@@ -37,13 +37,17 @@ func portHandler(port int) http.HandlerFunc {
 		// Encode the response before setting headers
 		responseData, err := json.Marshal(response)
 		if err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
 			return
 		}
 
 		// Set headers and write response
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(responseData)
+		_, err = w.Write(responseData)
+		if err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
