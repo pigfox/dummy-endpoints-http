@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"sort"
 	"sync"
 	"time"
 )
@@ -48,7 +47,7 @@ func main() {
 		groupedByAddress := make(map[string][]structs.Response)
 
 		for _, response := range allResponses {
-			for _, resp := range response.Responses { // Access nested responses
+			for _, resp := range response.Tokens { // Access nested responses
 				groupedByAddress[resp.Address] = append(groupedByAddress[resp.Address], response)
 			}
 		}
@@ -61,33 +60,27 @@ func main() {
 				continue // Not enough responses to compare
 			}
 
-			// Sort responses by price within the group
-			sort.Slice(responses, func(i, j int) bool {
-				return responses[i].Responses[0].Price < responses[j].Responses[0].Price
-			})
-
 			// Compare prices across all DEXes for this address
 			for i := 0; i < len(responses); i++ {
 				for j := i + 1; j < len(responses); j++ {
-					price1 := float64(responses[i].Responses[0].Price)
-					price2 := float64(responses[j].Responses[0].Price)
+					price1 := float64(responses[i].Tokens[0].Price)
+					price2 := float64(responses[j].Tokens[0].Price)
 					diffPct := math.Abs(price2-price1) / price1
 
 					if diffPct > priceDifferenceThreshold && responses[i].Dex != responses[j].Dex {
-						// Log the price difference with DEX names
-						var fromDex, toDex string
-						if responses[i].Responses[0].Price < responses[j].Responses[0].Price {
-							fromDex = responses[i].Dex
-							toDex = responses[j].Dex
-						} else {
-							fromDex = responses[j].Dex
-							toDex = responses[i].Dex
-						}
+						if responses[i].Tokens[0].Address == responses[j].Tokens[0].Address {
+							// Log the price difference with DEX names
+							var fromDex, toDex string
+							if responses[i].Tokens[0].Price < responses[j].Tokens[0].Price {
+								fromDex = responses[i].Dex
+								toDex = responses[j].Dex
+							} else {
+								fromDex = responses[j].Dex
+								toDex = responses[i].Dex
+							}
 
-						fmt.Printf("Price difference found for Address: %s\n", address)
-						fmt.Printf("Lowest Price: %s ---> Highest Price: %s\n", fromDex, toDex)
-						fmt.Printf("Price1: %.2f, Price2: %.2f, Difference: %.2f%%\n",
-							price1, price2, diffPct*100)
+							swap(address, fromDex, toDex, price1, price2, diffPct)
+						}
 					}
 				}
 			}
@@ -96,10 +89,14 @@ func main() {
 		fmt.Println("Total time taken: ", time.Since(beginTime))
 		fmt.Println("Total number of responses: ", len(allResponses))
 		fmt.Println("Total number of ports (servers): ", endPort-beginPort+1)
-		time.Sleep(3 * time.Second)
+		fmt.Println("----- Sleeping for ", structs.RequestSleepInterval, " seconds -----")
+		time.Sleep(structs.RequestSleepInterval * time.Second)
 	}
 }
 
-func swap() {
-
+func swap(address, fromDex, toDex string, price1, price2, diffPct float64) {
+	fmt.Printf("Price difference found for Address: %s\n", address)
+	fmt.Printf("Lowest Price: %s ---> Highest Price: %s\n", fromDex, toDex)
+	fmt.Printf("Price1: %.2f, Price2: %.2f, Difference: %.2f%%\n",
+		price1, price2, diffPct*100)
 }

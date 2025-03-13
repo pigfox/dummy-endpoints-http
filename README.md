@@ -11,5 +11,4 @@ Terminal 1
 Terminal 2
 ```
 ./client$ go run .
-```# dummy-endpoints-http
-# dummy-endpoints-http
+```

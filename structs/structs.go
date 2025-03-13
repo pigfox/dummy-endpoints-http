@@ -2,15 +2,17 @@ package structs
 
 import "math/rand"
 
-const ResponseRowsPerServerMax = 2500
-const ResponseRowsPerServerMin = 200 // Simulating returned number of tokens by DEX
+const ResponseRowsPerServerMax = 3
+const ResponseRowsPerServerMin = 1 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
 const RequestTimeOut = 5000    // Timeout in milliseconds
 const ResponseDelayMax = 10000 //
 const MinPort = 10001
-const MaxPort = 10055
+const MaxPort = 10003
+const RequestSleepInterval = 2
 
-var FailedPorts = []int{10002, 10003, 10006}
+// var FailedPorts = []int{10002, 10003, 10006, 10011, 11012}
+var FailedPorts = []int{}
 
 type Swap struct {
 }
@@ -22,11 +24,11 @@ type Ports struct {
 }
 
 type Response struct {
-	Dex       string `json:"dex"`
-	Responses []ResponseRow
+	Dex    string `json:"dex"`
+	Tokens []Token
 }
 
-type ResponseRow struct {
+type Token struct {
 	Timestamp string `json:"timestamp"`
 	Price     int    `json:"price"`
 	Supply    int    `json:"supply"`

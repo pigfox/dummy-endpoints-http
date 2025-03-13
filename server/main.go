@@ -16,11 +16,11 @@ func portHandler(port int) http.HandlerFunc {
 		delay := structs.RandomInt(0, structs.ResponseDelayMax)
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 
-		var row []structs.ResponseRow
+		var row []structs.Token
 		responseRows := structs.RandomInt(structs.ResponseRowsPerServerMin, structs.ResponseRowsPerServerMax)
 
 		for i := 0; i < responseRows; i++ {
-			res := structs.ResponseRow{
+			res := structs.Token{
 				Timestamp: time.Now().Format(time.RFC3339),
 				Price:     structs.RandomInt(1, 100),
 				Supply:    structs.RandomInt(1000, 100000000),
@@ -30,8 +30,8 @@ func portHandler(port int) http.HandlerFunc {
 		}
 
 		response := structs.Response{
-			Dex:       fmt.Sprintf("DEX %d", port),
-			Responses: row,
+			Dex:    fmt.Sprintf("DEX %d", port),
+			Tokens: row,
 		}
 
 		// Encode the response before setting headers
