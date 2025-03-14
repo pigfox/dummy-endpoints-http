@@ -12,3 +12,6 @@ Terminal 2
 ```
 ./client$ go run .
 ```
+
+Use structs/structs.go to alter the data settings that will be sent and received by the bot.
+
