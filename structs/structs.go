@@ -5,13 +5,13 @@ import "math/rand"
 const TokensPerServerMax = 4
 const TokensPerServerMin = 1 // Simulating returned number of tokens by DEX
 const PriceDifferencePct = 5
-const RequestTimeOut = 5000    // Timeout in milliseconds
-const ResponseDelayMax = 10000 //
+const RequestTimeOut = 5000   // Timeout in milliseconds
+const ResponseDelayMax = 5000 //
 const MinPort = 10001
 const MaxPort = 10003
 const RequestSleepInterval = 2
 
-// var FailedPorts = []int{10002, 10003, 10006, 10011, 11012}
+// var FailedPorts = []int{10002, 10003, 10006, 10011, 11012} // simulate failed ports
 var FailedPorts = []int{}
 
 type Swap struct {
