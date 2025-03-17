@@ -11,43 +11,74 @@ import (
 )
 
 func main() {
+	// Initialize credential manager
+	cm := NewCredentialManager()
+
+	// Get port range
 	beginPort := structs.GetPorts().Min
 	endPort := structs.GetPorts().Max
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var allResponses []structs.Response // Slice to hold structs.Response objects
+	// Add credentials for all ports
+	for port := beginPort; port <= endPort; port++ {
+		url := fmt.Sprintf("http://localhost:%d", port)
+		cm.AddCredential(APICredential{
+			EndpointURL: url,
+			Name:        fmt.Sprintf("Port%d", port),
+		})
+	}
 
 	for {
 		beginTime := time.Now()
 
-		// Iterate through each port and send requests concurrently
+		// Channel to collect responses
+		results := make(chan APIResponse, endPort-beginPort+1)
+		var wg sync.WaitGroup
+		var allResponses []structs.Response
+
+		// Launch concurrent requests
 		for port := beginPort; port <= endPort; port++ {
 			wg.Add(1)
+			cred, _ := cm.GetCredential(fmt.Sprintf("Port%d", port))
 
-			go func(port int) {
+			go func(c APICredential) {
 				defer wg.Done()
 
-				url := fmt.Sprintf("http://localhost:%d", port)
-				response, err := requester.Make(url) // Assuming Make returns a *structs.Response
+				response, err := requester.Make(c.EndpointURL)
 				if err != nil {
-					log.Printf("Error for port %d: %v", port, err)
+					results <- APIResponse{
+						EndpointName: c.Name,
+						Error:        err,
+					}
 					return
 				}
 
-				// Lock before modifying the shared slice
-				mu.Lock()
-				allResponses = append(allResponses, *response) // Append the dereferenced response
-				mu.Unlock()
-			}(port)
+				results <- APIResponse{
+					EndpointName: c.Name,
+					Data:         *response,
+				}
+			}(cred)
 		}
 
-		// Wait for all goroutines to complete
-		wg.Wait()
+		// Close results channel when all goroutines are done
+		go func() {
+			wg.Wait()
+			close(results)
+		}()
 
-		// Map to group tokens by address
-		groupedByAddress := make(map[string]map[string]float64) // map[address]map[DEX]Price
+		// Process results
+		for result := range results {
+			if result.Error != nil {
+				log.Printf("Error for %s: %v", result.EndpointName, result.Error)
+				continue
+			}
 
+			if resp, ok := result.Data.(structs.Response); ok {
+				allResponses = append(allResponses, resp)
+			}
+		}
+
+		// Existing price comparison logic
+		groupedByAddress := make(map[string]map[string]float64)
 		for _, response := range allResponses {
 			for _, token := range response.Tokens {
 				if _, exists := groupedByAddress[token.Address]; !exists {
@@ -57,24 +88,20 @@ func main() {
 			}
 		}
 
-		// Compare prices by address
 		priceDifferenceThreshold := structs.PriceDifferencePct / 100.0
-
 		for address, dexPrices := range groupedByAddress {
 			dexList := []string{}
 			prices := []float64{}
 
-			// Convert map to slice for comparison
 			for dex, price := range dexPrices {
 				dexList = append(dexList, dex)
 				prices = append(prices, price)
 			}
 
 			if len(prices) < 2 {
-				continue // Not enough DEXes to compare
+				continue
 			}
 
-			// Compare prices across all DEXes for this token
 			for i := 0; i < len(prices); i++ {
 				for j := i + 1; j < len(prices); j++ {
 					price1, price2 := prices[i], prices[j]
@@ -89,7 +116,6 @@ func main() {
 							fromDex = dexList[j]
 							toDex = dexList[i]
 						}
-
 						swap(address, fromDex, toDex, price1, price2, diffPct)
 					}
 				}
@@ -102,6 +128,44 @@ func main() {
 		fmt.Println("----- Sleeping for ", structs.RequestSleepInterval, " seconds -----")
 		time.Sleep(structs.RequestSleepInterval * time.Second)
 	}
+}
+
+// Add the supporting types from the previous answer
+type APICredential struct {
+	EndpointURL string
+	APIKey      string
+	APIToken    string
+	Name        string
+}
+
+type CredentialManager struct {
+	credentials map[string]APICredential
+	mu          sync.RWMutex
+}
+
+type APIResponse struct {
+	EndpointName string
+	Data         interface{}
+	Error        error
+}
+
+func NewCredentialManager() *CredentialManager {
+	return &CredentialManager{
+		credentials: make(map[string]APICredential),
+	}
+}
+
+func (cm *CredentialManager) AddCredential(cred APICredential) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	cm.credentials[cred.Name] = cred
+}
+
+func (cm *CredentialManager) GetCredential(name string) (APICredential, bool) {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+	cred, exists := cm.credentials[name]
+	return cred, exists
 }
 
 func swap(address, fromDex, toDex string, price1, price2, diffPct float64) {
